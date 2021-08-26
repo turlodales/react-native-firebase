@@ -25,13 +25,37 @@ jest.doMock('react-native', () => {
               options: {},
             },
           ],
+          addListener: jest.fn(),
+          eventsAddListener: jest.fn(),
+          eventsNotifyReady: jest.fn(),
+        },
+        RNFBAuthModule: {
+          APP_LANGUAGE: {
+            '[DEFAULT]': 'en-US',
+          },
+          APP_USER: {
+            '[DEFAULT]': 'jestUser',
+          },
+          addAuthStateListener: jest.fn(),
+          addIdTokenListener: jest.fn(),
+          useEmulator: jest.fn(),
+        },
+        RNFBCrashlyticsModule: {},
+        RNFBDatabaseModule: {
+          on: jest.fn(),
+          useEmulator: jest.fn(),
+        },
+        RNFBFirestoreModule: {
+          settings: jest.fn(),
+          documentSet: jest.fn(),
+        },
+        RNFBMessagingModule: {
+          onMessage: jest.fn(),
         },
         RNFBPerfModule: {},
-        RNFBAdMobModule: {},
-        RNFBAdMobInterstitialModule: {},
-        RNFBAdMobRewardedModule: {},
-        RNFBAdsConsentModule: {},
-        RNFBCrashlyticsModule: {},
+        RNFBStorageModule: {
+          useEmulator: jest.fn(),
+        },
       },
     },
     ReactNative,

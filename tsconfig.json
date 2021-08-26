@@ -17,7 +17,8 @@
     "skipLibCheck": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "lib": ["es2015", "es2016", "esnext", "dom"]
+    "esModuleInterop": true,
+    "lib": ["es2015", "es2016", "esnext"]
   },
   "exclude": ["node_modules", "**/*.spec.ts"]
 }

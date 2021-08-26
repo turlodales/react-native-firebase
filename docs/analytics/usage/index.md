@@ -3,7 +3,7 @@ title: Analytics
 description: Installation and getting started with Analytics.
 icon: //static.invertase.io/assets/firebase/analytics.svg
 next: /analytics/screen-tracking
-previous: /admob/european-user-consent
+previous: /contributing
 ---
 
 # Installation
@@ -34,11 +34,11 @@ Analytics collects usage and behavior data for your app. Its two primary concern
 
 <Youtube id="8iZpH7O6zXo" />
 
-Analytics automatically logs some [events](https://support.google.com/analytics/answer/9234069) and [user properties](https://support.google.com/analytics/answer/9268042); you don't need to add any code to enable them. However, Analytics also allows you to log [custom](#Custom-Events) or [predefined](#Predefined-Events) events within your app. How you can do this will be explained below.
+Analytics automatically logs some [events](https://support.google.com/analytics/answer/9234069) and [user properties](https://support.google.com/analytics/answer/9268042); you don't need to add any code to enable them. However, Analytics also allows you to log [custom](#custom-events) or [predefined](#predefined-events) events within your app. How you can do this will be explained below.
 
 # Usage
 
-Analytics offers a wealth of [Predefined Events](#Predefined-Events) to track user behavior. Analytics also offers folks the ability to log [Custom Events](#Custom-Events) . If you're already familiar with Google Analytics, this method is equivalent to using the event command in [gtag.js](https://developers.google.com/gtagjs/).
+Analytics offers a wealth of [Predefined Events](#predefined-events) to track user behavior. Analytics also offers folks the ability to log [Custom Events](#custom-events) . If you're already familiar with Google Analytics, this method is equivalent to using the event command in [gtag.js](https://developers.google.com/gtagjs/).
 
 ## Custom Events
 
@@ -54,8 +54,8 @@ function App() {
     <View>
       <Button
         title="Add To Basket"
-        onPress={() =>
-          analytics().logEvent('basket', {
+        onPress={async () =>
+          await analytics().logEvent('basket', {
             id: 3745092,
             item: 'mens grey t-shirt',
             description: ['round neck', 'long sleeved'],
@@ -89,8 +89,8 @@ function App() {
         title="Press me"
         // Logs in the firebase analytics console as "select_content" event
         // only accepts the two object properties which accept strings.
-        onPress={() =>
-          analytics().logSelectContent({
+        onPress={async () =>
+          await analytics().logSelectContent({
             content_type: 'clothing',
             item_id: 'abcd',
           })
@@ -119,6 +119,40 @@ with any of the following event names will throw an error.
 | `screen_view`          | `user_engagement`         | `ad_impression`     |
 | `ad_click`             | `ad_query`                | `ad_exposure`       |
 | `adunit_exposure`      | `ad_activeiew`            |
+
+## App instance id
+
+Below is an example showing how to retrieve the app instance id of the application. This will return null on android
+if FirebaseAnalytics.ConsentType.ANALYTICS_STORAGE has been set to FirebaseAnalytics.ConsentStatus.DENIED and null on
+iOS if ConsentType.analyticsStorage has been set to ConsentStatus.denied.
+
+```jsx
+import analytics from '@react-native-firebase/analytics';
+// ...
+const appInstanceId = await analytics().getAppInstanceId();
+```
+
+# Disable Ad Id usage on iOS
+
+Apple has a strict ban on the usage of Ad Ids ("IDFA") in Kids Category apps. They will not accept any app
+in the Kids category if the app accesses the IDFA iOS symbols.
+
+Additionally, apps must implement Apples "App Tracking Transparency" (or "ATT") requirements if they access IDFA symbols.
+However, if an app does not use IDFA and otherwise handles data in an ATT-compatible way, it eliminates this ATT requirement.
+
+If you need to avoid IDFA usage while still using analytics, then you need `firebase-ios-sdk` v7.11.0 or greater and to define the following variable in your Podfile:
+
+```ruby
+$RNFirebaseAnalyticsWithoutAdIdSupport = true
+```
+
+During `pod install`, using that variable installs a new
+["Analytics With No Ad Ids"](https://firebase.google.com/support/release-notes/ios#version_7110_-_april_20_2021)
+pod the firebase-ios-sdk team has created, and allows both the use of Firebase Analytics in Kids Category apps,
+and use of Firebase Analytics without needing the App Tracking Transparency handling (assuming no other parts
+of your app handle data in a way that requires ATT)
+
+Note that for obvious reasons, configuring Firebase Analytics for use without IDFA is incompatible with AdMob
 
 # firebase.json
 

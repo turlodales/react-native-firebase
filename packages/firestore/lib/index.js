@@ -74,6 +74,10 @@ class FirebaseFirestoreModule extends FirebaseModule {
         event,
       );
     });
+
+    this._settings = {
+      ignoreUndefinedProperties: false,
+    };
   }
 
   batch() {
@@ -84,8 +88,30 @@ class FirebaseFirestoreModule extends FirebaseModule {
     await this.native.clearPersistence();
   }
 
+  async waitForPendingWrites() {
+    await this.native.waitForPendingWrites();
+  }
+
   async terminate() {
     await this.native.terminate();
+  }
+
+  useEmulator(host, port) {
+    if (!host || !isString(host) || !port || !isNumber(port)) {
+      throw new Error('firebase.firestore().useEmulator() takes a non-empty host and port');
+    }
+    let _host = host;
+    if (isAndroid && _host) {
+      if (_host === 'localhost' || _host === '127.0.0.1') {
+        _host = '10.0.2.2';
+        // eslint-disable-next-line no-console
+        console.log(
+          'Mapping firestore host to "10.0.2.2" for android emulators. Use real IP on real devices.',
+        );
+      }
+    }
+    this.native.useEmulator(_host, port);
+    return [_host, port]; // undocumented return, just used to unit test android host remapping
   }
 
   collection(collectionPath) {
@@ -166,8 +192,8 @@ class FirebaseFirestoreModule extends FirebaseModule {
 
   runTransaction(updateFunction) {
     if (!isFunction(updateFunction)) {
-      throw new Error(
-        "firebase.firestore().runTransaction(*) 'updateFunction' must be a function.",
+      return Promise.reject(
+        new Error("firebase.firestore().runTransaction(*) 'updateFunction' must be a function."),
       );
     }
 
@@ -176,26 +202,39 @@ class FirebaseFirestoreModule extends FirebaseModule {
 
   settings(settings) {
     if (!isObject(settings)) {
-      throw new Error("firebase.firestore().settings(*) 'settings' must be an object.");
+      return Promise.reject(
+        new Error("firebase.firestore().settings(*) 'settings' must be an object."),
+      );
     }
 
     const keys = Object.keys(settings);
 
-    const opts = ['cacheSizeBytes', 'host', 'persistence', 'ssl'];
+    const opts = [
+      'cacheSizeBytes',
+      'host',
+      'persistence',
+      'ssl',
+      'ignoreUndefinedProperties',
+      'serverTimestampBehavior',
+    ];
 
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i];
       if (!opts.includes(key)) {
-        throw new Error(
-          `firebase.firestore().settings(*) 'settings.${key}' is not a valid settings field.`,
+        return Promise.reject(
+          new Error(
+            `firebase.firestore().settings(*) 'settings.${key}' is not a valid settings field.`,
+          ),
         );
       }
     }
 
     if (!isUndefined(settings.cacheSizeBytes)) {
       if (!isNumber(settings.cacheSizeBytes)) {
-        throw new Error(
-          "firebase.firestore().settings(*) 'settings.cacheSizeBytes' must be a number value.",
+        return Promise.reject(
+          new Error(
+            "firebase.firestore().settings(*) 'settings.cacheSizeBytes' must be a number value.",
+          ),
         );
       }
 
@@ -203,41 +242,86 @@ class FirebaseFirestoreModule extends FirebaseModule {
         settings.cacheSizeBytes !== FirestoreStatics.CACHE_SIZE_UNLIMITED &&
         settings.cacheSizeBytes < 1048576 // 1MB
       ) {
-        throw new Error(
-          "firebase.firestore().settings(*) 'settings.cacheSizeBytes' the minimum cache size is 1048576 bytes (1MB).",
+        return Promise.reject(
+          new Error(
+            "firebase.firestore().settings(*) 'settings.cacheSizeBytes' the minimum cache size is 1048576 bytes (1MB).",
+          ),
         );
       }
     }
 
     if (!isUndefined(settings.host)) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        'host in settings to connect with firestore emulator is deprecated. Use useEmulator instead.',
+      );
       if (!isString(settings.host)) {
-        throw new Error("firebase.firestore().settings(*) 'settings.host' must be a string value.");
+        return Promise.reject(
+          new Error("firebase.firestore().settings(*) 'settings.host' must be a string value."),
+        );
       }
 
       if (settings.host === '') {
-        throw new Error(
-          "firebase.firestore().settings(*) 'settings.host' must not be an empty string.",
+        return Promise.reject(
+          new Error(
+            "firebase.firestore().settings(*) 'settings.host' must not be an empty string.",
+          ),
         );
       }
 
       if (isAndroid) {
         if (settings.host.startsWith('localhost')) {
           settings.host = settings.host.replace('localhost', '10.0.2.2');
+          // eslint-disable-next-line no-console
+          console.log(
+            'Mapping firestore host "localhost" to "10.0.2.2" for android emulators. Use real IP on real devices.',
+          );
         }
         if (settings.host.startsWith('127.0.0.1')) {
           settings.host = settings.host.replace('127.0.0.1', '10.0.2.2');
+          // eslint-disable-next-line no-console
+          console.log(
+            'Mapping firestore host "127.0.0.1" to "10.0.2.2" for android emulators. Use real IP on real devices.',
+          );
         }
       }
     }
 
     if (!isUndefined(settings.persistence) && !isBoolean(settings.persistence)) {
-      throw new Error(
-        "firebase.firestore().settings(*) 'settings.persistence' must be a boolean value.",
+      return Promise.reject(
+        new Error(
+          "firebase.firestore().settings(*) 'settings.persistence' must be a boolean value.",
+        ),
       );
     }
 
     if (!isUndefined(settings.ssl) && !isBoolean(settings.ssl)) {
       throw new Error("firebase.firestore().settings(*) 'settings.ssl' must be a boolean value.");
+    }
+
+    if (
+      !isUndefined(settings.serverTimestampBehavior) &&
+      !['estimate', 'previous', 'none'].includes(settings.serverTimestampBehavior)
+    ) {
+      return Promise.reject(
+        new Error(
+          "firebase.firestore().settings(*) 'settings.serverTimestampBehavior' must be one of 'estimate', 'previous', 'none'.",
+        ),
+      );
+    }
+
+    if (!isUndefined(settings.ignoreUndefinedProperties)) {
+      if (!isBoolean(settings.ignoreUndefinedProperties)) {
+        return Promise.reject(
+          new Error(
+            "firebase.firestore().settings(*) 'settings.ignoreUndefinedProperties' must be a boolean value.",
+          ),
+        );
+      } else {
+        this._settings.ignoreUndefinedProperties = settings.ignoreUndefinedProperties;
+      }
+
+      delete settings.ignoreUndefinedProperties;
     }
 
     return this.native.settings(settings);

@@ -145,6 +145,10 @@ function moduleNameToFullName(name) {
   switch (name) {
     case 'admob':
       return 'AdMob';
+    case 'app-check':
+      return 'App Check';
+    case 'app-distribution':
+      return 'App Distribution';
     case 'analytics':
       return 'Analytics';
     case 'auth':
@@ -163,18 +167,18 @@ function moduleNameToFullName(name) {
       return 'Instance ID';
     case 'in-app-messaging':
       return 'In-App Messaging';
-    case 'ml-natural-language':
-      return 'ML Kit Natural Language';
+    case 'installations':
+      return 'Installations';
     case 'messaging':
       return 'Cloud Messaging';
+    case 'ml':
+      return 'ML';
     case 'perf':
       return 'Performance Monitoring';
     case 'remote-config':
       return 'Remote Config';
     case 'storage':
       return 'Storage';
-    case 'ml-vision':
-      return 'ML Kit Vision';
     case 'app':
       return 'Core/App';
     default:

@@ -15,8 +15,8 @@
  *
  */
 
-#import <React/RCTConvert.h>
 #import "RNFBMessagingSerializer.h"
+#import <React/RCTConvert.h>
 
 @implementation RNFBMessagingSerializer
 
@@ -29,10 +29,6 @@
   }
 
   return [token copy];
-}
-
-+ (NSDictionary *)remoteMessageToDict:(FIRMessagingRemoteMessage *)remoteMessage {
-  return [self remoteMessageUserInfoToDict:remoteMessage.appData];
 }
 
 + (NSDictionary *)notificationToDict:(UNNotification *)notification {
@@ -48,7 +44,8 @@
   // message.data
   for (id key in userInfo) {
     // message.messageId
-    if ([key isEqualToString:@"gcm.message_id"] || [key isEqualToString:@"google.message_id"] || [key isEqualToString:@"message_id"]) {
+    if ([key isEqualToString:@"gcm.message_id"] || [key isEqualToString:@"google.message_id"] ||
+        [key isEqualToString:@"message_id"]) {
       message[@"messageId"] = userInfo[key];
       continue;
     }
@@ -84,11 +81,7 @@
     }
 
     // build data dict from remaining keys but skip keys that shouldn't be included in data
-    if (
-        [key isEqualToString:@"aps"] ||
-            [key hasPrefix:@"gcm."] ||
-            [key hasPrefix:@"google."]
-        ) {
+    if ([key isEqualToString:@"aps"] || [key hasPrefix:@"gcm."] || [key hasPrefix:@"google."]) {
       continue;
     }
     data[key] = userInfo[key];
@@ -117,6 +110,12 @@
       message[@"mutableContent"] = @([RCTConvert BOOL:apsDict[@"mutable-content"]]);
     }
 
+    // iOS only
+    // message.notification.ios.badge
+    if (apsDict[@"badge"] != nil) {
+      notificationIOS[@"badge"] = apsDict[@"badge"];
+    }
+
     // message.notification.*
     if (apsDict[@"alert"] != nil) {
       // can be a string or dictionary
@@ -130,12 +129,12 @@
         if (apsAlertDict[@"title"] != nil) {
           notification[@"title"] = apsAlertDict[@"title"];
         }
-          
+
         // message.notification.titleLocKey
         if (apsAlertDict[@"title-loc-key"] != nil) {
           notification[@"titleLocKey"] = apsAlertDict[@"title-loc-key"];
         }
-          
+
         // message.notification.titleLocArgs
         if (apsAlertDict[@"title-loc-args"] != nil) {
           notification[@"titleLocArgs"] = apsAlertDict[@"title-loc-args"];
@@ -150,40 +149,30 @@
         if (apsAlertDict[@"loc-key"] != nil) {
           notification[@"bodyLocKey"] = apsAlertDict[@"loc-key"];
         }
-          
+
         // message.notification.bodyLocArgs
         if (apsAlertDict[@"loc-args"] != nil) {
           notification[@"bodyLocArgs"] = apsAlertDict[@"loc-args"];
         }
-          
+
         // iOS only
         // message.notification.ios.subtitle
         if (apsAlertDict[@"subtitle"] != nil) {
           notificationIOS[@"subtitle"] = apsAlertDict[@"subtitle"];
         }
-          
+
         // iOS only
         // message.notification.ios.subtitleLocKey
         if (apsAlertDict[@"subtitle-loc-key"] != nil) {
           notificationIOS[@"subtitleLocKey"] = apsAlertDict[@"subtitle-loc-key"];
         }
-          
+
         // iOS only
         // message.notification.ios.subtitleLocArgs
         if (apsAlertDict[@"subtitle-loc-args"] != nil) {
           notificationIOS[@"subtitleLocArgs"] = apsAlertDict[@"subtitle-loc-args"];
         }
-          
-        // iOS only
-        // message.notification.ios.badge
-        if (apsAlertDict[@"badge"] != nil) {
-          notificationIOS[@"badge"] = apsAlertDict[@"badge"];
-        }
       }
-
-
-      notification[@"ios"] = notificationIOS;
-      message[@"notification"] = notification;
     }
 
     // message.notification.ios.sound
@@ -213,10 +202,13 @@
         // message.notification.ios.sound
         notificationIOS[@"sound"] = notificationIOSSound;
       }
-
-      notification[@"ios"] = notificationIOS;
-      message[@"notification"] = notification;
     }
+  }
+  if ([notificationIOS count] > 0) {
+    notification[@"ios"] = notificationIOS;
+  }
+  if ([notification count] > 0) {
+    message[@"notification"] = notification;
   }
 
   return message;

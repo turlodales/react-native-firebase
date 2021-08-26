@@ -23,7 +23,6 @@ import {
   isIOS,
   isObject,
   isString,
-  isUndefined,
 } from '@react-native-firebase/app/lib/common';
 import {
   createModuleNamespace,
@@ -126,38 +125,16 @@ class FirebaseMessagingModule extends FirebaseModule {
     return this.native.getInitialNotification();
   }
 
-  getToken(authorizedEntity, scope) {
-    if (!isUndefined(authorizedEntity) && !isString(authorizedEntity)) {
-      throw new Error(
-        "firebase.messaging().getToken(*) 'authorizedEntity' expected a string value.",
-      );
-    }
-
-    if (!isUndefined(scope) && !isString(scope)) {
-      throw new Error("firebase.messaging().getToken(_, *) 'scope' expected a string value.");
-    }
-
-    return this.native.getToken(
-      authorizedEntity || this.app.options.messagingSenderId,
-      scope || 'FCM',
-    );
+  getIsHeadless() {
+    return this.native.getIsHeadless();
   }
 
-  deleteToken(authorizedEntity, scope) {
-    if (!isUndefined(authorizedEntity) && !isString(authorizedEntity)) {
-      throw new Error(
-        "firebase.messaging().deleteToken(*) 'authorizedEntity' expected a string value.",
-      );
-    }
+  getToken() {
+    return this.native.getToken();
+  }
 
-    if (!isUndefined(scope) && !isString(scope)) {
-      throw new Error("firebase.messaging().deleteToken(_, *) 'scope' expected a string value.");
-    }
-
-    return this.native.deleteToken(
-      authorizedEntity || this.app.options.messagingSenderId,
-      scope || 'FCM',
-    );
+  deleteToken() {
+    return this.native.deleteToken();
   }
 
   onMessage(listener) {
@@ -311,7 +288,10 @@ class FirebaseMessagingModule extends FirebaseModule {
   }
 
   /**
-   * @platform android
+   * Set a handler that will be called when a message is received while the app is in the background.
+   * Should be called before the app is registered in `AppRegistry`, for example in `index.js`.
+   * An app is considered to be in the background if no active window is displayed.
+   * @param handler called with an argument of type messaging.RemoteMessage that must be async and return a Promise
    */
   setBackgroundMessageHandler(handler) {
     if (!isFunction(handler)) {
@@ -321,9 +301,15 @@ class FirebaseMessagingModule extends FirebaseModule {
     }
 
     backgroundMessageHandler = handler;
+    if (isIOS) {
+      this.native.signalBackgroundMessageHandlerSet();
+    }
   }
 
   sendMessage(remoteMessage) {
+    if (isIOS) {
+      throw new Error(`firebase.messaging().sendMessage() is only supported on Android devices.`);
+    }
     let options;
     try {
       options = remoteMessageOptions(this.app.options.messagingSenderId, remoteMessage);

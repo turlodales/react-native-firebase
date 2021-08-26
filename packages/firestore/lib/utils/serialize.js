@@ -47,14 +47,24 @@ export function provideFieldValueClass(fieldValue) {
 /**
  *
  * @param data
+ * @param ignoreUndefined
  */
-export function buildNativeMap(data) {
+export function buildNativeMap(data, ignoreUndefined) {
   const nativeData = {};
   if (data) {
     const keys = Object.keys(data);
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i];
-      const typeMap = generateNativeData(data[key]);
+
+      if (typeof data[key] === 'undefined') {
+        if (!ignoreUndefined) {
+          throw new Error('Unsupported field value: undefined');
+        } else {
+          continue;
+        }
+      }
+
+      const typeMap = generateNativeData(data[key], ignoreUndefined);
       if (typeMap) {
         nativeData[key] = typeMap;
       }
@@ -68,12 +78,19 @@ export function buildNativeMap(data) {
  * @param array
  * @returns {Array}
  */
-export function buildNativeArray(array) {
+export function buildNativeArray(array, ignoreUndefined) {
   const nativeArray = [];
   if (array) {
     for (let i = 0; i < array.length; i++) {
       const value = array[i];
-      const typeMap = generateNativeData(value);
+      if (typeof value === 'undefined') {
+        if (!ignoreUndefined) {
+          throw new Error('Unsupported field value: undefined');
+        } else {
+          continue;
+        }
+      }
+      const typeMap = generateNativeData(value, ignoreUndefined);
       if (typeMap) {
         nativeArray.push(typeMap);
       }
@@ -90,9 +107,10 @@ export function buildNativeArray(array) {
  * Example: [7, 'some string'];
  *
  * @param value
+ * @param ignoreUndefined
  * @returns {*}
  */
-export function generateNativeData(value) {
+export function generateNativeData(value, ignoreUndefined) {
   if (Number.isNaN(value)) {
     return getTypeMapInt('nan');
   }
@@ -135,7 +153,7 @@ export function generateNativeData(value) {
   }
 
   if (isArray(value)) {
-    return getTypeMapInt('array', buildNativeArray(value));
+    return getTypeMapInt('array', buildNativeArray(value, ignoreUndefined));
   }
 
   if (isObject(value)) {
@@ -165,7 +183,7 @@ export function generateNativeData(value) {
       return getTypeMapInt('fieldvalue', [value._type, value._elements]);
     }
 
-    return getTypeMapInt('object', buildNativeMap(value));
+    return getTypeMapInt('object', buildNativeMap(value, ignoreUndefined));
   }
 
   // eslint-disable-next-line no-console

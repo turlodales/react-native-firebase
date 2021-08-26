@@ -43,7 +43,7 @@ type Props = {
   pageContext: PageContext;
 };
 
-function EntityTemplate({ location, data, pageContext }: Props) {
+function EntityTemplate({ location, data, pageContext }: Props): JSX.Element | null {
   const { id, previous, next } = pageContext;
   const { module, allModule } = data;
 
@@ -153,7 +153,7 @@ function EntityTemplate({ location, data, pageContext }: Props) {
 }
 
 export const pageQuery = graphql`
-  query($id: String!) {
+  query ($id: String!) {
     module(entities: { elemMatch: { id: { eq: $id } } }) {
       module
 

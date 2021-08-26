@@ -25,6 +25,14 @@
 
 @implementation AppDelegate
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+
+  // Install the AppCheck debug provider so we may get tokens on iOS Simulators for testing.
+  // See https://firebase.google.com/docs/app-check/ios/debug-provider for instructions on configuring a debug token
+  // This *must* be done before the `[FIRApp configure]` line, so it must be done in AppDelegate for any app
+  // that wants to enforce AppCheck restrictions on their backend while also doing testing on iOS Simulator.
+  FIRAppCheckDebugProviderFactory *providerFactory = [[FIRAppCheckDebugProviderFactory alloc] init];
+  [FIRAppCheck setAppCheckProviderFactory:providerFactory];
+
   if ([FIRApp defaultApp] == nil) {
     [FIRApp configure];
   }
@@ -40,7 +48,11 @@
                                                    launchOptions:launchOptions];
 
 
-  rootView.backgroundColor = [[UIColor alloc] initWithRed:1.0f green:1.0f blue:1.0f alpha:1];
+  if (@available(iOS 13.0, *)) {
+      rootView.backgroundColor = [UIColor systemBackgroundColor];
+  } else {
+      rootView.backgroundColor = [UIColor whiteColor];
+  }
 
   self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
   UIViewController *rootViewController = [UIViewController new];
@@ -71,12 +83,6 @@
 
 - (void)aTest {
   NSLog(@"TESTING3");
-}
-
-- (void)messaging:(nonnull FIRMessaging *)messaging didReceiveMessage:(nonnull FIRMessagingRemoteMessage *)remoteMessage {
-  NSLog(@"TESTING1");
-  [self aTest];
-  NSLog(@"TESTING2");
 }
 
 @end

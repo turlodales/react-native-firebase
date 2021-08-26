@@ -32,7 +32,7 @@ type Props = {
   data: PageQuery;
 };
 
-function DocumentationTemplate({ location, data }: Props) {
+function DocumentationTemplate({ location, data }: Props): JSX.Element {
   const { mdx, next, previous, sidebar } = data;
 
   const toc = (
@@ -108,7 +108,7 @@ function DocumentationTemplate({ location, data }: Props) {
 }
 
 export const pageQuery = graphql`
-  query($id: String!, $next: String!, $previous: String!) {
+  query ($id: String!, $next: String!, $previous: String!) {
     mdx: mdx(id: { eq: $id }) {
       body
       frontmatter {

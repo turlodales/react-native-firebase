@@ -19,29 +19,26 @@ const { PATH, seed, wipe } = require('../helpers');
 
 const TEST_PATH = `${PATH}/orderByValue`;
 
-describe('database().ref().orderByValue()', () => {
-  before(() => seed(TEST_PATH));
-  after(() => wipe(TEST_PATH));
+describe('database().ref().orderByValue()', function () {
+  before(async function () {
+    await seed(TEST_PATH);
+  });
+  after(async function () {
+    await wipe(TEST_PATH);
+  });
 
-  it('throws if an orderBy call has already been set', async () => {
+  it('throws if an orderBy call has already been set', async function () {
     try {
-      await firebase
-        .database()
-        .ref()
-        .orderByChild('foo')
-        .orderByValue();
+      await firebase.database().ref().orderByChild('foo').orderByValue();
       return Promise.reject(new Error('Did not throw an Error.'));
     } catch (error) {
       error.message.should.containEql("You can't combine multiple orderBy calls");
       return Promise.resolve();
     }
   });
-  // TODO potentially flakey on CI iOS - possible crash
-  xit('order by value', async () => {
-    const ref = firebase
-      .database()
-      .ref(TEST_PATH)
-      .child('query');
+
+  it('order by value', async function () {
+    const ref = firebase.database().ref(TEST_PATH).child('query');
 
     await ref.set({
       a: 2,

@@ -19,19 +19,18 @@ const { PATH, wipe } = require('../helpers');
 
 const TEST_PATH = `${PATH}/onDisconnectRemove`;
 
-describe('database().ref().onDisconnect().remove()', () => {
-  after(() => wipe(TEST_PATH));
-
-  afterEach(() => {
-    // Ensures the db is online before running each test
-    firebase.database().goOnline();
+describe('database().ref().onDisconnect().remove()', function () {
+  after(async function () {
+    await wipe(TEST_PATH);
   });
 
-  it('throws if onComplete is not a function', () => {
-    const ref = firebase
-      .database()
-      .ref(TEST_PATH)
-      .onDisconnect();
+  afterEach(async function () {
+    // Ensures the db is online before running each test
+    await firebase.database().goOnline();
+  });
+
+  it('throws if onComplete is not a function', function () {
+    const ref = firebase.database().ref(TEST_PATH).onDisconnect();
     try {
       ref.remove('foo');
       return Promise.reject(new Error('Did not throw an Error.'));
@@ -41,28 +40,19 @@ describe('database().ref().onDisconnect().remove()', () => {
     }
   });
 
-  it('removes a node whilst offline', async () => {
-    const ref = firebase
-      .database()
-      .ref(TEST_PATH)
-      .child('removeMe');
-
+  xit('removes a node whilst offline', async function () {
+    const ref = firebase.database().ref(TEST_PATH).child('removeMe');
     await ref.set('foobar');
-
     await ref.onDisconnect().remove();
     await firebase.database().goOffline();
     await firebase.database().goOnline();
-
     const snapshot = await ref.once('value');
     snapshot.exists().should.eql(false);
   });
 
-  it('calls back to the onComplete function', async () => {
+  it('calls back to the onComplete function', async function () {
     const callback = sinon.spy();
-    const ref = firebase
-      .database()
-      .ref(TEST_PATH)
-      .child('removeMe');
+    const ref = firebase.database().ref(TEST_PATH).child('removeMe');
 
     // Set an initial value
     await ref.set('foo');

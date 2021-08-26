@@ -316,6 +316,11 @@ export namespace FirebaseStorageTypes {
     contentType?: string | null;
 
     /**
+     * You may specify the md5hash of the file in metadata on upload only. It may not be updated via updateMetadata
+     */
+    md5hash?: string | null;
+
+    /**
      * Additional user-defined custom metadata for this storage object.
      *
      * String values only are supported for custom metadata property values.
@@ -1094,29 +1099,41 @@ export namespace FirebaseStorageTypes {
      * e.g. `gs://assets/logo.png` or `https://firebasestorage.googleapis.com/v0/b/react-native-firebase-testing.appspot.com/o/cats.gif`.
      */
     refFromURL(url: string): Reference;
+
+    /**
+     * Modify this Storage instance to communicate with the Firebase Storage emulator.
+     * This must be called synchronously immediately following the first call to firebase.storage().
+     * Do not use with production credentials as emulator traffic is not encrypted.
+     *
+     * Note: on android, hosts 'localhost' and '127.0.0.1' are automatically remapped to '10.0.2.2' (the
+     * "host" computer IP address for android emulators) to make the standard development experience easy.
+     * If you want to use the emulator on a real android device, you will need to specify the actual host
+     * computer IP address.
+     *
+     * @param host: emulator host (eg, 'localhost')
+     * @param port: emulator port (eg, 9199)
+     */
+    useEmulator(host: string, port: number): void;
   }
 }
 
-declare module '@react-native-firebase/storage' {
-  // tslint:disable-next-line:no-duplicate-imports required otherwise doesn't work
-  import { ReactNativeFirebase } from '@react-native-firebase/app';
-  import ReactNativeFirebaseModule = ReactNativeFirebase.Module;
-  import FirebaseModuleWithStaticsAndApp = ReactNativeFirebase.FirebaseModuleWithStaticsAndApp;
+declare const defaultExport: ReactNativeFirebase.FirebaseModuleWithStaticsAndApp<
+  FirebaseStorageTypes.Module,
+  FirebaseStorageTypes.Statics
+>;
 
-  const firebaseNamedExport: {} & ReactNativeFirebaseModule;
-  export const firebase = firebaseNamedExport;
+export const firebase: ReactNativeFirebase.Module & {
+  storage: typeof defaultExport;
+  app(name?: string): ReactNativeFirebase.FirebaseApp & { storage(): FirebaseStorageTypes.Module };
+};
 
-  const defaultExport: FirebaseModuleWithStaticsAndApp<
-    FirebaseStorageTypes.Module,
-    FirebaseStorageTypes.Statics
-  >;
-  export default defaultExport;
-}
+export default defaultExport;
 
 /**
  * Attach namespace to `firebase.` and `FirebaseApp.`.
  */
 declare module '@react-native-firebase/app' {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   namespace ReactNativeFirebase {
     import FirebaseModuleWithStaticsAndApp = ReactNativeFirebase.FirebaseModuleWithStaticsAndApp;
     interface Module {

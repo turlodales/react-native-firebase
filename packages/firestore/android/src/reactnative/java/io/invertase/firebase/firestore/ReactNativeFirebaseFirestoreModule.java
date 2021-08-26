@@ -17,15 +17,15 @@ package io.invertase.firebase.firestore;
  *
  */
 
+import static io.invertase.firebase.common.RCTConvertFirebase.toHashMap;
+import static io.invertase.firebase.firestore.ReactNativeFirebaseFirestoreCommon.rejectPromiseFirestoreException;
+
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 import com.google.firebase.firestore.FirebaseFirestore;
 import io.invertase.firebase.common.ReactNativeFirebaseModule;
-
-import static io.invertase.firebase.common.RCTConvertFirebase.toHashMap;
-import static io.invertase.firebase.firestore.ReactNativeFirebaseFirestoreCommon.rejectPromiseFirestoreException;
 
 public class ReactNativeFirebaseFirestoreModule extends ReactNativeFirebaseModule {
   private static final String SERVICE_NAME = "Firestore";
@@ -47,56 +47,99 @@ public class ReactNativeFirebaseFirestoreModule extends ReactNativeFirebaseModul
 
   @ReactMethod
   public void clearPersistence(String appName, Promise promise) {
-    module.clearPersistence(appName).addOnCompleteListener(task -> {
-      if (task.isSuccessful()) {
-        promise.resolve(null);
-      } else {
-        rejectPromiseFirestoreException(promise, task.getException());
-      }
-    });
+    module
+        .clearPersistence(appName)
+        .addOnCompleteListener(
+            task -> {
+              if (task.isSuccessful()) {
+                promise.resolve(null);
+              } else {
+                rejectPromiseFirestoreException(promise, task.getException());
+              }
+            });
+  }
+
+  @ReactMethod
+  public void waitForPendingWrites(String appName, Promise promise) {
+    module
+        .waitForPendingWrites(appName)
+        .addOnCompleteListener(
+            task -> {
+              if (task.isSuccessful()) {
+                promise.resolve(null);
+              } else {
+                rejectPromiseFirestoreException(promise, task.getException());
+              }
+            });
   }
 
   @ReactMethod
   public void disableNetwork(String appName, Promise promise) {
-    module.disableNetwork(appName).addOnCompleteListener(task -> {
-      if (task.isSuccessful()) {
-        promise.resolve(null);
-      } else {
-        rejectPromiseFirestoreException(promise, task.getException());
-      }
-    });
+    module
+        .disableNetwork(appName)
+        .addOnCompleteListener(
+            task -> {
+              if (task.isSuccessful()) {
+                promise.resolve(null);
+              } else {
+                rejectPromiseFirestoreException(promise, task.getException());
+              }
+            });
   }
 
   @ReactMethod
   public void enableNetwork(String appName, Promise promise) {
-    module.enableNetwork(appName).addOnCompleteListener(task -> {
-      if (task.isSuccessful()) {
-        promise.resolve(null);
-      } else {
-        rejectPromiseFirestoreException(promise, task.getException());
-      }
-    });
+    module
+        .enableNetwork(appName)
+        .addOnCompleteListener(
+            task -> {
+              if (task.isSuccessful()) {
+                promise.resolve(null);
+              } else {
+                rejectPromiseFirestoreException(promise, task.getException());
+              }
+            });
+  }
+
+  @ReactMethod
+  public void useEmulator(String appName, String host, int port, Promise promise) {
+    module
+        .useEmulator(appName, host, port)
+        .addOnCompleteListener(
+            task -> {
+              if (task.isSuccessful()) {
+                promise.resolve(null);
+              } else {
+                rejectPromiseFirestoreException(promise, task.getException());
+              }
+            });
   }
 
   @ReactMethod
   public void settings(String appName, ReadableMap settings, Promise promise) {
-    module.settings(appName, toHashMap(settings)).addOnCompleteListener(task -> {
-      if (task.isSuccessful()) {
-        promise.resolve(null);
-      } else {
-        rejectPromiseFirestoreException(promise, task.getException());
-      }
-    });
+    module
+        .settings(appName, toHashMap(settings))
+        .addOnCompleteListener(
+            task -> {
+              if (task.isSuccessful()) {
+                promise.resolve(null);
+              } else {
+                rejectPromiseFirestoreException(promise, task.getException());
+              }
+            });
   }
 
   @ReactMethod
   public void terminate(String appName, Promise promise) {
-    module.terminate(appName).addOnCompleteListener(task -> {
-      if (task.isSuccessful()) {
-        promise.resolve(null);
-      } else {
-        rejectPromiseFirestoreException(promise, task.getException());
-      }
-    });
+    module
+        .terminate(appName)
+        .addOnCompleteListener(
+            task -> {
+              if (task.isSuccessful()) {
+                promise.resolve(null);
+              } else {
+                rejectPromiseFirestoreException(promise, task.getException());
+              }
+            });
   }
 }

@@ -15,29 +15,28 @@
  *
  */
 
-android.describe('perf()', () => {
-  describe('setPerformanceCollectionEnabled()', () => {
-    // TODO sometimes android launches with isPerformanceCollectionEnabled = false
-    xit('true', async () => {
-      should.equal(firebase.perf().isPerformanceCollectionEnabled, true);
-      await firebase.perf().setPerformanceCollectionEnabled(true);
-      should.equal(firebase.perf().isPerformanceCollectionEnabled, true);
-      await Utils.sleep(2000);
+describe('perf()', function () {
+  describe('setPerformanceCollectionEnabled()', function () {
+    // These depend on `tests/firebase.json` having `perf_auto_collection_enabled` set to false the first time
+    // The setting is persisted across restarts, reset to false after for local runs where prefs are sticky
+    afterEach(async function () {
+      await firebase.perf().setPerformanceCollectionEnabled(false);
     });
 
-    it('false', async () => {
-      await device.launchApp();
-      await firebase.perf().setPerformanceCollectionEnabled(false);
+    it('true', async function () {
       should.equal(firebase.perf().isPerformanceCollectionEnabled, false);
-      await Utils.sleep(1500);
       await firebase.perf().setPerformanceCollectionEnabled(true);
       should.equal(firebase.perf().isPerformanceCollectionEnabled, true);
-      await Utils.sleep(1500);
+    });
+
+    it('false', async function () {
+      await firebase.perf().setPerformanceCollectionEnabled(false);
+      should.equal(firebase.perf().isPerformanceCollectionEnabled, false);
     });
   });
 
-  describe('startTrace()', () => {
-    it('resolves a started instance of Trace', async () => {
+  describe('startTrace()', function () {
+    it('resolves a started instance of Trace', async function () {
       const trace = await firebase.perf().startTrace('invertase');
       trace.constructor.name.should.be.equal('Trace');
       trace._identifier.should.equal('invertase');
