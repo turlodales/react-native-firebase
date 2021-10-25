@@ -66,7 +66,7 @@ while true; do
   _CURRENT_SEARCH_DIR=$(dirname "$_CURRENT_SEARCH_DIR")
   if [[ "$_CURRENT_SEARCH_DIR" == "/" ]] || [[ ${_CURRENT_LOOKUPS} -gt ${_MAX_LOOKUPS} ]]; then break; fi;
   echo "info:      ($_CURRENT_LOOKUPS of $_MAX_LOOKUPS) Searching in '$_CURRENT_SEARCH_DIR' for a ${_JSON_FILE_NAME} file."
-  _SEARCH_RESULT=$(find "$_CURRENT_SEARCH_DIR" -maxdepth 2 -name ${_JSON_FILE_NAME} -print | head -n 1)
+  _SEARCH_RESULT=$(find "$_CURRENT_SEARCH_DIR" -maxdepth 2 -name ${_JSON_FILE_NAME} -print | /usr/bin/head -n 1)
   if [[ ${_SEARCH_RESULT} ]]; then
     echo "info:      ${_JSON_FILE_NAME} found at $_SEARCH_RESULT"
     break;
@@ -86,6 +86,62 @@ if [[ ${_SEARCH_RESULT} ]]; then
   _PLIST_ENTRY_TYPES+=("string")
   _PLIST_ENTRY_VALUES+=("$_JSON_OUTPUT_BASE64")
 
+  # config.app_data_collection_default_enabled
+  _APP_DATA_COLLECTION_ENABLED=$(getFirebaseJsonKeyValue "$_JSON_OUTPUT_RAW" "app_data_collection_default_enabled")
+  if [[ $_APP_DATA_COLLECTION_ENABLED ]]; then
+    _PLIST_ENTRY_KEYS+=("FirebaseDataCollectionDefaultEnabled")
+    _PLIST_ENTRY_TYPES+=("bool")
+    _PLIST_ENTRY_VALUES+=("$(jsonBoolToYesNo "$_APP_DATA_COLLECTION_ENABLED")")
+  fi
+
+  # config.analytics_auto_collection_enabled
+  _ANALYTICS_AUTO_COLLECTION=$(getFirebaseJsonKeyValue "$_JSON_OUTPUT_RAW" "analytics_auto_collection_enabled")
+  if [[ $_ANALYTICS_AUTO_COLLECTION ]]; then
+    _PLIST_ENTRY_KEYS+=("FIREBASE_ANALYTICS_COLLECTION_ENABLED")
+    _PLIST_ENTRY_TYPES+=("bool")
+    _PLIST_ENTRY_VALUES+=("$(jsonBoolToYesNo "$_ANALYTICS_AUTO_COLLECTION")")
+  fi
+
+  # config.analytics_collection_deactivated
+  _ANALYTICS_DEACTIVATED=$(getFirebaseJsonKeyValue "$_JSON_OUTPUT_RAW" "analytics_collection_deactivated")
+  if [[ $_ANALYTICS_DEACTIVATED ]]; then
+    _PLIST_ENTRY_KEYS+=("FIREBASE_ANALYTICS_COLLECTION_DEACTIVATED")
+    _PLIST_ENTRY_TYPES+=("bool")
+    _PLIST_ENTRY_VALUES+=("$(jsonBoolToYesNo "$_ANALYTICS_DEACTIVATED")")
+  fi
+
+  # config.analytics_idfv_collection_enabled
+  _ANALYTICS_IDFV_COLLECTION=$(getFirebaseJsonKeyValue "$_JSON_OUTPUT_RAW" "analytics_idfv_collection_enabled")
+  if [[ $_ANALYTICS_IDFV_COLLECTION ]]; then
+    _PLIST_ENTRY_KEYS+=("GOOGLE_ANALYTICS_IDFV_COLLECTION_ENABLED")
+    _PLIST_ENTRY_TYPES+=("bool")
+    _PLIST_ENTRY_VALUES+=("$(jsonBoolToYesNo "$_ANALYTICS_IDFV_COLLECTION")")
+  fi
+
+  # config.analytics_default_allow_ad_personalization_signals
+  _ANALYTICS_PERSONALIZATION=$(getFirebaseJsonKeyValue "$_JSON_OUTPUT_RAW" "analytics_default_allow_ad_personalization_signals")
+  if [[ $_ANALYTICS_PERSONALIZATION ]]; then
+    _PLIST_ENTRY_KEYS+=("GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_PERSONALIZATION_SIGNALS")
+    _PLIST_ENTRY_TYPES+=("bool")
+    _PLIST_ENTRY_VALUES+=("$(jsonBoolToYesNo "$_ANALYTICS_PERSONALIZATION")")
+  fi
+
+  # config.perf_auto_collection_enabled
+  _PERF_AUTO_COLLECTION=$(getFirebaseJsonKeyValue "$_JSON_OUTPUT_RAW" "perf_auto_collection_enabled")
+  if [[ $_PERF_AUTO_COLLECTION ]]; then
+    _PLIST_ENTRY_KEYS+=("firebase_performance_collection_enabled")
+    _PLIST_ENTRY_TYPES+=("bool")
+    _PLIST_ENTRY_VALUES+=("$(jsonBoolToYesNo "$_PERF_AUTO_COLLECTION")")
+  fi
+
+  # config.perf_collection_deactivated
+  _PERF_DEACTIVATED=$(getFirebaseJsonKeyValue "$_JSON_OUTPUT_RAW" "perf_collection_deactivated")
+  if [[ $_PERF_DEACTIVATED ]]; then
+    _PLIST_ENTRY_KEYS+=("firebase_performance_collection_deactivated")
+    _PLIST_ENTRY_TYPES+=("bool")
+    _PLIST_ENTRY_VALUES+=("$(jsonBoolToYesNo "$_PERF_DEACTIVATED")")
+  fi
+
   # config.messaging_auto_init_enabled
   _MESSAGING_AUTO_INIT=$(getFirebaseJsonKeyValue "$_JSON_OUTPUT_RAW" "messaging_auto_init_enabled")
   if [[ $_MESSAGING_AUTO_INIT ]]; then
@@ -94,7 +150,23 @@ if [[ ${_SEARCH_RESULT} ]]; then
     _PLIST_ENTRY_VALUES+=("$(jsonBoolToYesNo "$_MESSAGING_AUTO_INIT")")
   fi
 
-  # config.crashlytics_disable_auto_disabler - undocumented for now - mainly for debugging, document if becomes usful
+  # config.in_app_messaging_auto_colllection_enabled
+  _FIAM_AUTO_INIT=$(getFirebaseJsonKeyValue "$_JSON_OUTPUT_RAW" "in_app_messaging_auto_collection_enabled")
+  if [[ $_FIAM_AUTO_INIT ]]; then
+    _PLIST_ENTRY_KEYS+=("FirebaseInAppMessagingAutomaticDataCollectionEnabled")
+    _PLIST_ENTRY_TYPES+=("bool")
+    _PLIST_ENTRY_VALUES+=("$(jsonBoolToYesNo "$_FIAM_AUTO_INIT")")
+  fi
+
+  # config.app_check_token_auto_refresh
+  _APP_CHECK_TOKEN_AUTO_REFRESH=$(getFirebaseJsonKeyValue "$_JSON_OUTPUT_RAW" "app_check_token_auto_refresh")
+  if [[ $_APP_CHECK_TOKEN_AUTO_REFRESH ]]; then
+    _PLIST_ENTRY_KEYS+=("FirebaseAppCheckTokenAutoRefreshEnabled")
+    _PLIST_ENTRY_TYPES+=("bool")
+    _PLIST_ENTRY_VALUES+=("$(jsonBoolToYesNo "$_APP_CHECK_TOKEN_AUTO_REFRESH")")
+  fi
+
+  # config.crashlytics_disable_auto_disabler - undocumented for now - mainly for debugging, document if becomes useful
   _CRASHLYTICS_AUTO_DISABLE_ENABLED=$(getFirebaseJsonKeyValue "$_JSON_OUTPUT_RAW" "crashlytics_disable_auto_disabler")
   if [[ $_CRASHLYTICS_AUTO_DISABLE_ENABLED == "true" ]]; then
     echo "Disabled Crashlytics auto disabler." # do nothing
@@ -102,22 +174,6 @@ if [[ ${_SEARCH_RESULT} ]]; then
     _PLIST_ENTRY_KEYS+=("FirebaseCrashlyticsCollectionEnabled")
     _PLIST_ENTRY_TYPES+=("bool")
     _PLIST_ENTRY_VALUES+=("NO")
-  fi
-
-  # config.admob_delay_app_measurement_init
-  _ADMOB_DELAY_APP_MEASUREMENT=$(getFirebaseJsonKeyValue "$_JSON_OUTPUT_RAW" "admob_delay_app_measurement_init")
-  if [[ $_ADMOB_DELAY_APP_MEASUREMENT == "true" ]]; then
-    _PLIST_ENTRY_KEYS+=("GADDelayAppMeasurementInit")
-    _PLIST_ENTRY_TYPES+=("bool")
-    _PLIST_ENTRY_VALUES+=("YES")
-  fi
-
-  # config.admob_ios_app_id
-  _ADMOB_IOS_APP_ID=$(getFirebaseJsonKeyValue "$_JSON_OUTPUT_RAW" "admob_ios_app_id")
-  if [[ $_ADMOB_IOS_APP_ID ]]; then
-    _PLIST_ENTRY_KEYS+=("GADApplicationIdentifier")
-    _PLIST_ENTRY_TYPES+=("string")
-    _PLIST_ENTRY_VALUES+=("$_ADMOB_IOS_APP_ID")
   fi
 else
   _PLIST_ENTRY_KEYS+=("firebase_json_raw")
@@ -137,7 +193,7 @@ for plist in "${_TARGET_PLIST}" "${_DSYM_PLIST}" ; do
   if [[ -f "${plist}" ]]; then
 
     # paths with spaces break the call to setPlistValue. temporarily modify
-    # the shell internal field separator variable (IFS), which normally 
+    # the shell internal field separator variable (IFS), which normally
     # includes spaces, to consist only of line breaks
     oldifs=$IFS
     IFS="
@@ -155,4 +211,3 @@ for plist in "${_TARGET_PLIST}" "${_DSYM_PLIST}" ; do
 done
 
 echo "info: <- RNFB build script finished"
-

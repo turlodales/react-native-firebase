@@ -58,6 +58,8 @@ export namespace ReactNativeFirebase {
     readonly nativeErrorMessage: string;
   }
 
+  export type LogLevelString = 'debug' | 'verbose' | 'info' | 'warn' | 'error' | 'silent';
+
   export interface FirebaseAppOptions {
     /**
      * The Google App ID that is used to uniquely identify an instance of an app.
@@ -122,7 +124,10 @@ export namespace ReactNativeFirebase {
     name?: string;
 
     /**
-     *
+     * Default setting for data collection on startup that affects all Firebase module startup data collection settings,
+     * in the absence of module-specific overrides. This will start as false if you set "app_data_collection_default_enabled"
+     * to false in firebase.json and may be used in opt-in flows, for example a GDPR-compliant app.
+     * If configured false initially, set to true after obtaining consent, then enable module-specific settings as needed afterwards.
      */
     automaticDataCollectionEnabled?: boolean;
 
@@ -148,6 +153,8 @@ export namespace ReactNativeFirebase {
      * Make this app unusable and free up resources.
      */
     delete(): Promise<void>;
+
+    utils(): Utils.Module;
   }
 
   export interface Module {
@@ -157,7 +164,7 @@ export namespace ReactNativeFirebase {
      * @param options Options to configure the services used in the App.
      * @param config The optional config for your firebase app
      */
-    initializeApp(options: FirebaseAppOptions, config?: FirebaseAppConfig): FirebaseApp;
+    initializeApp(options: FirebaseAppOptions, config?: FirebaseAppConfig): Promise<FirebaseApp>;
 
     /**
      * Create (and initialize) a FirebaseApp.
@@ -166,7 +173,7 @@ export namespace ReactNativeFirebase {
      * @param name The optional name of the app to initialize ('[DEFAULT]' if
      * omitted)
      */
-    initializeApp(options: FirebaseAppOptions, name?: string): FirebaseApp;
+    initializeApp(options: FirebaseAppOptions, name?: string): Promise<FirebaseApp>;
 
     /**
      * Retrieve an instance of a FirebaseApp.
@@ -181,6 +188,19 @@ export namespace ReactNativeFirebase {
     app(name?: string): FirebaseApp;
 
     /**
+     * Set the log level across all modules. Only applies to iOS currently, has no effect on Android.
+     * Should be one of 'error', 'warn', 'info', or 'debug'.
+     * Logs messages at the configured level or lower (less verbose / more important).
+     * Note that if an app is running from AppStore, it will never log above info even if
+     * level is set to a higher (more verbose) setting.
+     * Note that iOS is missing firebase-js-sdk log levels 'verbose' and 'silent'.
+     * 'verbose' if used will map to 'debug', 'silent' has no valid mapping and will return an error if used.
+     *
+     * @ios
+     */
+    setLogLevel(logLevel: LogLevelString): void;
+
+    /**
      * A (read-only) array of all the initialized Apps.
      */
     apps: FirebaseApp[];
@@ -189,6 +209,13 @@ export namespace ReactNativeFirebase {
      * The current React Native Firebase version.
      */
     readonly SDK_VERSION: string;
+
+    /**
+     * Utils provides a collection of utilities to aid in using Firebase
+     * and related services inside React Native, e.g. Test Lab helpers
+     * and Google Play Services version helpers.
+     */
+    utils: typeof utils;
   }
 
   /**
@@ -211,6 +238,7 @@ export namespace ReactNativeFirebase {
     private emitter: any;
   }
 
+  // eslint-disable-next-line @typescript-eslint/ban-types
   export type FirebaseModuleWithStatics<M, S = {}> = {
     (): M;
 
@@ -220,6 +248,7 @@ export namespace ReactNativeFirebase {
     readonly SDK_VERSION: string;
   } & S;
 
+  // eslint-disable-next-line @typescript-eslint/ban-types
   export type FirebaseModuleWithStaticsAndApp<M, S = {}> = {
     (app?: FirebaseApp): M;
 
@@ -228,12 +257,6 @@ export namespace ReactNativeFirebase {
      */
     readonly SDK_VERSION: string;
   } & S;
-
-  /**
-   * React Native Firebase `firebase.json` config
-   */
-  // eslint-disable-next-line @typescript-eslint/no-empty-interface
-  export interface FirebaseJsonConfig {}
 }
 
 /*
@@ -278,6 +301,11 @@ export namespace Utils {
      * Returns an absolute path to the users Documents directory.
      *
      * Use this directory to place documents that have been created by the user.
+     *
+     * Normally this is the external files directory on Android but if no external storage directory found,
+     * e.g. removable media has been ejected by the user, it will fall back to internal storage. This may
+     * under rare circumstances where device storage environment changes cause the directory to be different
+     * between runs of the application
      *
      * ```js
      * firebase.utils.FilePath.DOCUMENT_DIRECTORY;
@@ -328,6 +356,7 @@ export namespace Utils {
      * Traditionally this is an SD card, but it may also be implemented as built-in storage on a device.
      *
      * Returns null if no external storage directory found, e.g. removable media has been ejected by the user.
+     * Requires special permission granted by Play Store review team on Android, is unlikely to be a valid path.
      *
      * ```js
      * firebase.utils.FilePath.EXTERNAL_STORAGE_DIRECTORY;
@@ -339,6 +368,7 @@ export namespace Utils {
 
     /**
      * Returns an absolute path to a directory in which to place pictures that are available to the user.
+     * Requires special permission granted by Play Store review team on Android, is unlikely to be a valid path.
      *
      * ```js
      * firebase.utils.FilePath.PICTURES_DIRECTORY;
@@ -348,6 +378,7 @@ export namespace Utils {
 
     /**
      * Returns an absolute path to a directory in which to place movies that are available to the user.
+     * Requires special permission granted by Play Store review team on Android, is unlikely to be a valid path.
      *
      * ```js
      * firebase.utils.FilePath.MOVIES_DIRECTORY;
@@ -536,37 +567,10 @@ export namespace Utils {
   }
 }
 
-declare module '@react-native-firebase/app' {
-  /**
-   * Add Utils module as a named export for `app`.
-   */
-  export const utils: ReactNativeFirebase.FirebaseModuleWithStatics<Utils.Module, Utils.Statics>;
+/**
+ * Add Utils module as a named export for `app`.
+ */
+export const utils: ReactNativeFirebase.FirebaseModuleWithStatics<Utils.Module, Utils.Statics>;
 
-  /**
-   * Default Firebase export.
-   */
-  const module: {} & ReactNativeFirebase.Module;
-  export default module;
-}
-
-declare module '@react-native-firebase/app' {
-  /**
-   * Attach Utils namespace to `firebase.` and `FirebaseApp.`.
-   */
-  namespace ReactNativeFirebase {
-    import FirebaseModuleWithStatics = ReactNativeFirebase.FirebaseModuleWithStatics;
-
-    interface Module {
-      /**
-       * Utils provides a collection of utilities to aid in using Firebase
-       * and related services inside React Native, e.g. Test Lab helpers
-       * and Google Play Services version helpers.
-       */
-      utils: FirebaseModuleWithStatics<Utils.Module, Utils.Statics>;
-    }
-
-    interface FirebaseApp {
-      utils(): Utils.Module;
-    }
-  }
-}
+declare const module: ReactNativeFirebase.Module;
+export default module;

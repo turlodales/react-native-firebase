@@ -7,44 +7,67 @@ buildscript {
   if (project == rootProject) {
     repositories {
       google()
-      jcenter()
+      mavenCentral()
     }
 
     dependencies {
-      classpath("com.android.tools.build:gradle:4.0.0")
+      classpath("com.android.tools.build:gradle:7.0.3")
     }
   }
 }
 
 plugins {
-  id "io.invertase.gradle.build" version "1.4"
+  id "io.invertase.gradle.build" version "1.5"
 }
 
 def packageJson = PackageJson.getForProject(project)
 def firebaseBomVersion = packageJson['sdkVersions']['android']['firebase']
+def playServicesAuthVersion = packageJson['sdkVersions']['android']['playServicesAuth']
+def jsonMinSdk = packageJson['sdkVersions']['android']['minSdk']
+def jsonTargetSdk = packageJson['sdkVersions']['android']['targetSdk']
+def jsonCompileSdk = packageJson['sdkVersions']['android']['compileSdk']
+def jsonBuildTools = packageJson['sdkVersions']['android']['buildTools']
 
 project.ext {
   set('react-native', [
     versions: [
       android : [
-        minSdk    : 16,
-        targetSdk : 28,
-        compileSdk: 28,
+        minSdk    : jsonMinSdk,
+        targetSdk : jsonTargetSdk,
+        compileSdk: jsonCompileSdk,
         // optional as gradle.buildTools comes with one by default
         // overriding here though to match the version RN uses
-        buildTools: "28.0.3"
+        buildTools: jsonBuildTools
       ],
 
       firebase: [
         bom: firebaseBomVersion,
       ],
+
+      play     : [
+        "play-services-auth": playServicesAuthVersion,
+      ],
     ],
   ])
+}
+
+apply from: file('./firebase-json.gradle')
+
+// If data collection isn't specifically disabled, default is enabled
+String dataCollectionDefaultEnabled = 'true'
+
+if (rootProject.ext && rootProject.ext.firebaseJson) {
+  if (rootProject.ext.firebaseJson.isFlagEnabled('app_data_collection_default_enabled', true) == false) {
+    dataCollectionDefaultEnabled = 'false'
+  }
 }
 
 android {
   defaultConfig {
     multiDexEnabled true
+    manifestPlaceholders = [
+      firebaseJsonDataCollectionDefaultEnabled: dataCollectionDefaultEnabled
+    ]
   }
   lintOptions {
     disable 'GradleCompatible'
@@ -64,16 +87,14 @@ android {
 
 repositories {
   google()
-  jcenter()
+  mavenCentral()
 }
 
 dependencies {
   implementation platform("com.google.firebase:firebase-bom:${ReactNative.ext.getVersion("firebase", "bom")}")
-  implementation "com.google.firebase:firebase-core"
   implementation "com.google.firebase:firebase-common"
+  implementation "com.google.android.gms:play-services-auth:${ReactNative.ext.getVersion("play", "play-services-auth")}"
 }
-
-apply from: file("./firebase-json.gradle")
 
 ReactNative.shared.applyPackageVersion()
 ReactNative.shared.applyDefaultExcludes()

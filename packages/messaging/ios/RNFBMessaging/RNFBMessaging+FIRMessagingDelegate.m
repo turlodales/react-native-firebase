@@ -15,10 +15,10 @@
  *
  */
 
-#import <objc/runtime.h>
-#import <objc/message.h>
-#import <RNFBApp/RNFBRCTEventEmitter.h>
 #import <GoogleUtilities/GULAppDelegateSwizzler.h>
+#import <RNFBApp/RNFBRCTEventEmitter.h>
+#import <objc/message.h>
+#import <objc/runtime.h>
 
 #import "RNFBMessaging+FIRMessagingDelegate.h"
 #import "RNFBMessagingSerializer.h"
@@ -40,7 +40,6 @@
   dispatch_once(&once, ^{
     RNFBMessagingFIRMessagingDelegate *strongSelf = weakSelf;
     [FIRMessaging messaging].delegate = strongSelf;
-    [FIRMessaging messaging].shouldEstablishDirectChannel = NO;
   });
 }
 
@@ -49,34 +48,22 @@
 
 // JS -> `onTokenRefresh`
 - (void)messaging:(FIRMessaging *)messaging didReceiveRegistrationToken:(NSString *)fcmToken {
-  if (fcmToken == nil) { // Don't crash when the token is reset
+  if (fcmToken == nil) {  // Don't crash when the token is reset
     return;
   }
-  [[RNFBRCTEventEmitter shared] sendEventWithName:@"messaging_token_refresh" body:@{
-      @"token": fcmToken
-  }];
+  [[RNFBRCTEventEmitter shared] sendEventWithName:@"messaging_token_refresh"
+                                             body:@{@"token" : fcmToken}];
 
   // If the users AppDelegate implements messaging:didReceiveRegistrationToken: then call it
   SEL messaging_didReceiveRegistrationTokenSelector =
       NSSelectorFromString(@"messaging:didReceiveRegistrationToken:");
-  if ([[GULAppDelegateSwizzler sharedApplication].delegate respondsToSelector:messaging_didReceiveRegistrationTokenSelector]) {
-    void (*usersDidReceiveRegistrationTokenIMP)(id, SEL, FIRMessaging *, NSString *) = (typeof(usersDidReceiveRegistrationTokenIMP)) &objc_msgSend;
-    usersDidReceiveRegistrationTokenIMP([GULAppDelegateSwizzler sharedApplication].delegate, messaging_didReceiveRegistrationTokenSelector, messaging, fcmToken);
-  }
-}
-
-// JS -> `onMessage`
-// Receive data messages on iOS 10+ directly from FCM (bypassing APNs) when the app is in the foreground.
-// To enable direct data messages, you can set [Messaging messaging].shouldEstablishDirectChannel to YES.
-- (void)messaging:(nonnull FIRMessaging *)messaging didReceiveMessage:(nonnull FIRMessagingRemoteMessage *)remoteMessage {
-  [[RNFBRCTEventEmitter shared] sendEventWithName:@"messaging_message_received" body:[RNFBMessagingSerializer remoteMessageToDict:remoteMessage]];
-
-  // If the users AppDelegate implements messaging:didReceiveMessage: then call it
-  SEL messaging_didReceiveMessageSelector =
-      NSSelectorFromString(@"messaging:didReceiveMessage:");
-  if ([[GULAppDelegateSwizzler sharedApplication].delegate respondsToSelector:messaging_didReceiveMessageSelector]) {
-    void (*usersDidReceiveMessageIMP)(id, SEL, FIRMessaging *, FIRMessagingRemoteMessage *) = (typeof(usersDidReceiveMessageIMP)) &objc_msgSend;
-    usersDidReceiveMessageIMP([GULAppDelegateSwizzler sharedApplication].delegate, messaging_didReceiveMessageSelector, messaging, remoteMessage);
+  if ([[GULAppDelegateSwizzler sharedApplication].delegate
+          respondsToSelector:messaging_didReceiveRegistrationTokenSelector]) {
+    void (*usersDidReceiveRegistrationTokenIMP)(id, SEL, FIRMessaging *, NSString *) =
+        (typeof(usersDidReceiveRegistrationTokenIMP)) & objc_msgSend;
+    usersDidReceiveRegistrationTokenIMP([GULAppDelegateSwizzler sharedApplication].delegate,
+                                        messaging_didReceiveRegistrationTokenSelector, messaging,
+                                        fcmToken);
   }
 }
 

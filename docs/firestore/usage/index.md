@@ -23,7 +23,7 @@ cd ios/ && pod install
 ```
 
 If you're using an older version of React Native without autolinking support, or wish to integrate into an existing project,
-you can follow the manual installation steps for [iOS](/firestore/usage/installation/ios) and [Android](firestore/usage/installation/android).
+you can follow the manual installation steps for [iOS](/firestore/usage/installation/ios) and [Android](/firestore/usage/installation/android).
 
 If you have started to receive a `app:mergeDexDebug` error after adding Cloud Firestore, please read the
 [Enabling Multidex](/enabling-multidex) documentation for more information on how to resolve this error.
@@ -58,9 +58,7 @@ on the collection by calling the `doc` method:
 import firestore from '@react-native-firebase/firestore';
 
 // Get user document with an ID of ABC
-const userDocument = firestore()
-  .collection('Users')
-  .doc('ABC');
+const userDocument = firestore().collection('Users').doc('ABC');
 ```
 
 The `doc` method returns a [`DocumentReference`](/reference/firestore/documentreference).
@@ -82,13 +80,8 @@ or [`DocumentReference`](/reference/firestore/documentreference):
 ```js
 import firestore from '@react-native-firebase/firestore';
 
-const users = await firestore()
-  .collection('Users')
-  .get();
-const user = await firestore()
-  .collection('Users')
-  .doc('ABC')
-  .get();
+const users = await firestore().collection('Users').get();
+const user = await firestore().collection('Users').doc('ABC').get();
 ```
 
 ### Realtime changes
@@ -107,9 +100,7 @@ function onError(error) {
   console.error(error);
 }
 
-firestore()
-  .collection('Users')
-  .onSnapshot(onResult, onError);
+firestore().collection('Users').onSnapshot(onResult, onError);
 ```
 
 The `onSnapshot` method also returns a function, allowing you to unsubscribe from events. This can be used within any
@@ -306,10 +297,7 @@ The above query orders the users by age in descending order, but only returns us
 You can further specify a [`DocumentSnapshot`](/reference/firestore/documentsnapshot) instead of a specific value. For example:
 
 ```js
-const userDocumentSnapshot = await firestore()
-  .collection('Users')
-  .doc('DEF')
-  .get();
+const userDocumentSnapshot = await firestore().collection('Users').doc('DEF').get();
 
 firestore()
   .collection('Users')
@@ -330,9 +318,6 @@ Cloud Firestore does not support the following types of queries:
 
 - Queries with range filters on different fields, as described in the previous section.
 - Logical OR queries. In this case, you should create a separate query for each OR condition and merge the query results in your app.
-- Queries with a `!=` clause. In this case, you should split the query into a greater-than query and a less-than query.
-  For example, although the query clause `where("age", "!=", "30")` is not supported, you can get the same result set by
-  combining two queries, one with the clause `where("age", "<", "30")` and one with the clause `where("age", ">", 30)`.
 
 ## Writing Data
 
@@ -444,11 +429,9 @@ class. When written to the database, the Firebase servers will write a new times
 resolve any data consistency issues with different client timezones:
 
 ```js
-firestore()
-  .doc('users/ABC')
-  .update({
-    createdAt: firestore.FieldValue.serverTimestamp(),
-  });
+firestore().doc('users/ABC').update({
+  createdAt: firestore.FieldValue.serverTimestamp(),
+});
 ```
 
 Cloud Firestore also allows for storing arrays. To help manage the values with an array (adding or removing) the API
@@ -499,12 +482,9 @@ If you need to remove a specific property with a document, rather than the docum
 method on the [`FieldValue`](/reference/firestore/fieldvalue) class:
 
 ```js
-firestore()
-  .collection('Users')
-  .doc('ABC')
-  .update({
-    fcmTokens: firestore.FieldValue.delete(),
-  });
+firestore().collection('Users').doc('ABC').update({
+  fcmTokens: firestore.FieldValue.delete(),
+});
 ```
 
 ## Transactions
@@ -549,7 +529,7 @@ function onPostLike(postId) {
       throw 'Post does not exist!';
     }
 
-    await transaction.update(postReference, {
+    transaction.update(postReference, {
       likes: postSnapshot.data().likes + 1,
     });
   });
@@ -574,9 +554,7 @@ import firestore from '@react-native-firebase/firestore';
 
 async function massDeleteUsers() {
   // Get all users
-  const usersQuerySnapshot = await firestore()
-    .collection('Users')
-    .get();
+  const usersQuerySnapshot = await firestore().collection('Users').get();
 
   // Create a new batch instance
   const batch = firestore().batch();

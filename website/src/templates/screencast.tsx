@@ -27,7 +27,7 @@ type Props = {
   data: PageScreencastQuery;
 };
 
-function ScreencastTemplate({ location, data }: Props) {
+function ScreencastTemplate({ location, data }: Props): JSX.Element {
   const cast = data.screenCast;
   const { next, previous } = data;
 
@@ -91,7 +91,7 @@ function ScreencastTemplate({ location, data }: Props) {
 }
 
 export const pageQuery = graphql`
-  query($id: String!, $next: String!, $previous: String!) {
+  query ($id: String!, $next: String!, $previous: String!) {
     screenCast(id: { eq: $id }) {
       title
       description

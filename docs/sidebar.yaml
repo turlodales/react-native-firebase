@@ -15,14 +15,6 @@
   - 'https://github.com/invertase/react-native-firebase/blob/master/CONTRIBUTING.md'
 - - Legacy Docs (<= v5)
   - 'https://v5.rnfirebase.io/docs/v5.x.x/getting-started'
-- - AdMob
-  - - - Usage
-      - '/admob/usage'
-    - - Displaying Adverts
-      - '/admob/displaying-ads'
-    - - European User Consent
-      - '/admob/european-user-consent'
-  - '//static.invertase.io/assets/firebase/google-admob.svg'
 - - Analytics
   - - - Usage
       - '/analytics/usage'
@@ -31,6 +23,14 @@
     - - Building an Analytics Funnel
       - 'https://blog.theodo.com/2018/01/building-google-analytics-funnel-firebase-react-native'
   - '//static.invertase.io/assets/firebase/analytics.svg'
+- - App Check
+  - - - Usage
+      - '/app-check/usage'
+  - '//static.invertase.io/assets/social/firebase-logo.png'
+- - App Distribution
+  - - - Usage
+      - '/app-distribution/usage'
+  - '/assets/docs/app-distribution/app-distribution.png'
 - - Authentication
   - - - Usage
       - '/auth/usage'
@@ -43,7 +43,7 @@
   - - - Usage
       - '/firestore/usage'
     - - Usage with Emulator
-      - '/firestore/emulator'  
+      - '/firestore/emulator'
     - - Usage with FlatLists
       - '/firestore/usage-with-flatlists'
     - - Building a "TODO" app
@@ -62,6 +62,8 @@
       - '/messaging/ios-permissions'
     - - Notifications
       - '/messaging/notifications'
+    - - iOS Notification Images
+      - '/messaging/ios-notification-images'
     - - Server Integration
       - '/messaging/server-integration'
   - '//static.invertase.io/assets/firebase/cloud-messaging.svg'
@@ -72,6 +74,8 @@
 - - Core / App
   - - - Usage
       - '/app/usage'
+    - - JSON Config
+      - '/app/json-config'
     - - Utils
       - '/app/utils'
   - '//static.invertase.io/assets/social/firebase-logo.png'
@@ -93,31 +97,17 @@
   - - - Usage
       - '/dynamic-links/usage'
   - '//static.invertase.io/assets/firebase/dynamic-links.svg'
-- - Instance ID
-  - - - Usage
-      - '/iid/usage'
-  - '//static.invertase.io/assets/social/firebase-logo.png'
 - - In-App Messaging
   - - - Usage
       - '/in-app-messaging/usage'
   - '//static.invertase.io/assets/firebase/in-app-messaging.svg'
-- - ML Kit Natural Language
+- - Installations
   - - - Usage
-      - '/ml-natural-language/usage'
-  - '//static.invertase.io/assets/firebase/ml-kit.svg'
-- - ML Kit Vision
+      - '/installations/usage'
+  - '//static.invertase.io/assets/social/firebase-logo.png'
+- - ML
   - - - Usage
-      - '/ml-vision/usage'
-    - - Text Recognition
-      - '/ml-vision/text-recognition'
-    - - Landmark Recognition
-      - '/ml-vision/landmark-recognition'
-    - - Barcode Scanning
-      - '/ml-vision/barcode-scanning'
-    - - Image Labeling
-      - '/ml-vision/image-labeling'
-    - - Face Detection
-      - '/ml-vision/face-detection'
+      - '/ml/usage'
   - '//static.invertase.io/assets/firebase/ml-kit.svg'
 - - Remote Config
   - - - Usage
@@ -128,4 +118,6 @@
       - '/perf/usage'
     - - Axios Integration
       - '/perf/axios-integration'
+    - - KY Integration
+      - '/perf/ky-integration'
   - '//static.invertase.io/assets/firebase/performance-monitoring.svg'

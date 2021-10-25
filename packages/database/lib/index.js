@@ -15,7 +15,7 @@
  *
  */
 
-import { isBoolean, isNumber, isString } from '@react-native-firebase/app/lib/common';
+import { isAndroid, isBoolean, isNumber, isString } from '@react-native-firebase/app/lib/common';
 import {
   createModuleNamespace,
   FirebaseModule,
@@ -74,6 +74,12 @@ class FirebaseDatabaseModule extends FirebaseModule {
   ref(path = '/') {
     if (!isString(path)) {
       throw new Error("firebase.app().database().ref(*) 'path' must be a string value.");
+    }
+
+    if (/[#$\[\]'?]/g.test(path)) {
+      throw new Error(
+        `Paths must be non-empty strings and can't contain #, $, [, ], ' or ? | path: ${path}`,
+      );
     }
 
     return new DatabaseReference(this, path);
@@ -173,6 +179,24 @@ class FirebaseDatabaseModule extends FirebaseModule {
     }
 
     return this.native.setPersistenceCacheSizeBytes(bytes);
+  }
+
+  useEmulator(host, port) {
+    if (!host || !isString(host) || !port || !isNumber(port)) {
+      throw new Error('firebase.database().useEmulator() takes a non-empty host and port');
+    }
+    let _host = host;
+    if (isAndroid && _host) {
+      if (_host === 'localhost' || _host === '127.0.0.1') {
+        _host = '10.0.2.2';
+        // eslint-disable-next-line no-console
+        console.log(
+          'Mapping database host to "10.0.2.2" for android emulators. Use real IP on real devices.',
+        );
+      }
+    }
+    this.native.useEmulator(_host, port);
+    return [_host, port]; // undocumented return, just used to unit test android host remapping
   }
 }
 

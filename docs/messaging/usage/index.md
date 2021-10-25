@@ -72,7 +72,7 @@ On Android, you do not need to request user permission. This method can still be
 
 ## Receiving messages
 
-FCM messages can be sent to *real* Android/iOS devices and Android emulators (iOS simulators however do *not* handle cloud messages) via a number of methods (see below).
+FCM messages can be sent to _real_ Android/iOS devices and Android emulators (iOS simulators however do _not_ handle cloud messages) via a number of methods (see below).
 A message is simply a payload of data which can be used however you see fit within your application.
 
 Common use-cases for handling messages could be:
@@ -110,6 +110,10 @@ The device state and message contents determines which handler will be called:
 - In cases where the message is data-only and the device is in the background or quit, both Android & iOS treat the message
   as low priority and will ignore it (i.e. no event will be sent). You can however increase the priority by setting the `priority` to `high` (Android) and
   `content-available` to `true` (iOS) properties on the payload.
+
+- On iOS in cases where the message is data-only and the device is in the background or quit, the message will be delayed
+  until the background message handler is registered via setBackgroundMessageHandler, signaling the application's javascript
+  is loaded and ready to run.
 
 To learn more about how to send these options in your message payload, view the Firebase documentation for your [FCM API implementation](https://firebase.google.com/docs/cloud-messaging/concept-options).
 
@@ -216,25 +220,25 @@ For iOS specific "data-only" messages, the message must include the appropriate 
 
 ```js
 admin.messaging().send({
-    data: {
-      //some data
-    },
-    apns: {
-      payload: {
-        aps: {
-          contentAvailable: true
-        }
+  data: {
+    //some data
+  },
+  apns: {
+    payload: {
+      aps: {
+        contentAvailable: true,
       },
-      headers: {
-        'apns-push-type': 'background',
-        'apns-priority': '5',
-        'apns-topic': '' // your app bundle identifier
-      }
     },
-    //must include token, topic, or condition
-    //token: //device token
-    //topic: //notification topic
-    //condition: //notification condition
+    headers: {
+      'apns-push-type': 'background',
+      'apns-priority': '5',
+      'apns-topic': '', // your app bundle identifier
+    },
+  },
+  //must include token, topic, or condition
+  //token: //device token
+  //topic: //notification topic
+  //condition: //notification condition
 });
 ```
 
@@ -250,7 +254,7 @@ Although the library supports handling messages in background/quit states, the u
 On Android, a [Headless JS](https://reactnative.dev/docs/headless-js-android) task (an Android only feature) is created that runs separately to your main React component; allowing your background handler code to run without mounting your root component.
 
 On iOS however, when a message is received the device silently starts your application in a background state. At this point, your background handler (via `setBackgroundMessageHandler`) is triggered, but your root React component also gets mounted. This can be problematic for some users since any side-effects will be called inside of your app (e.g. `useEffects`, analytics events/triggers etc). To get around this problem,
-you can configure your `AppDelegate.m` file (see instructions below) to inject a `isHeadless` prop into your root component.  Use this property to conditionally render `null` ("nothing") if your app is launched in the background:
+you can configure your `AppDelegate.m` file (see instructions below) to inject a `isHeadless` prop into your root component. Use this property to conditionally render `null` ("nothing") if your app is launched in the background:
 
 ```jsx
 // index.js
@@ -270,7 +274,7 @@ function HeadlessCheck({ isHeadless }) {
   return <App />;
 }
 
-function App{) {
+function App() {
   // Your application
 }
 
@@ -278,7 +282,7 @@ AppRegistry.registerComponent('app', () => HeadlessCheck);
 ```
 
 To inject a `isHeadless` prop into your app, please update your `AppDelegate.m` file as instructed below:
- 
+
 ```objectivec
 // add this import statement at the top of your `AppDelegate.m` file
 #import "RNFBMessagingModule.h"
@@ -295,6 +299,15 @@ RCTRootView *rootView = [[RCTRootView alloc] initWithBridge:bridge
                                              initialProperties:appProperties];
 ```
 
+- For projects that use react-native-navigation (or if you just don't want to mess with your launchProperties) you can use the `getIsHeadless` method (iOS only) from messaging like so:
+
+```jsx
+messaging()
+  .getIsHeadless()
+  .then(isHeadless => {
+    // do sth with isHeadless
+  });
+```
 
 On Android, the `isHeadless` prop will not exist.
 
@@ -320,7 +333,7 @@ documentation.
 
 #### Subscribing to topics
 
-To subscribe a device, call the `subscribeToTopic` method with the topic name:
+To subscribe a device, call the `subscribeToTopic` method with the topic name (must not include "/"):
 
 ```js
 messaging()
@@ -425,7 +438,7 @@ On Android, any messages which display a [Notification](/messaging/notifications
 (such as the small icon, title etc). To provide a custom tint color, update the `messaging_android_notification_color` property
 with a Android color resource name.
 
-The library provides a set of default [HTML colors](https://www.w3schools.com/colors/colors_names.asp) (in lowercase) for ease, for example:
+The library provides a set of [predefined colors](https://github.com/invertase/react-native-firebase/blob/master/packages/messaging/android/src/main/res/values/colors.xml) corresponding to the [HTML colors](https://www.w3schools.com/colors/colors_names.asp) for convenience, for example:
 
 ```json
 // <projectRoot>/firebase.json
@@ -434,4 +447,27 @@ The library provides a set of default [HTML colors](https://www.w3schools.com/co
     "messaging_android_notification_color": "@color/hotpink"
   }
 }
+```
+
+Note that only predefined colors can be used in `firebase.json`. If you want to use a custom color defined in your application resources, then you should set it in the `AndroidManifest.xml` instead.
+
+```xml
+<!-- <projectRoot>/android/app/src/main/res/values/colors.xml -->
+<resources>
+  <color name="my-custom-color">#123456</color>
+</resources>
+
+<!-- <projectRoot>/android/app/src/main/AndroidManifest.xml -->
+
+<!--  add "tools" to manifest tag  -->
+<manifest xmlns:tools="http://schemas.android.com/tools">
+  <application>
+      <!-- ... -->
+
+      <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/my-custom-color"
+            tools:replace="android:resource" />
+  </application>
+</manifest>
 ```

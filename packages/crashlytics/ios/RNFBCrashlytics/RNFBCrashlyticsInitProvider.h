@@ -15,12 +15,16 @@
  *
  */
 
-#import <Foundation/Foundation.h>
 #import <FirebaseCore/FIRLibrary.h>
+#import <Foundation/Foundation.h>
 
 @interface RNFBCrashlyticsInitProvider : NSObject <FIRLibrary>
 
 + (BOOL)isCrashlyticsCollectionEnabled;
+
++ (BOOL)isErrorGenerationOnJSCrashEnabled;
+
++ (BOOL)isCrashlyticsJavascriptExceptionHandlerChainingEnabled;
 
 /// Returns one or more FIRComponents that will be registered in
 /// FIRApp and participate in dependency resolution and injection.

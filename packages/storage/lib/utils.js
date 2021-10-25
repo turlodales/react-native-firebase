@@ -25,14 +25,15 @@ const SETTABLE_FIELDS = [
   'contentLanguage',
   'contentType',
   'customMetadata',
+  'md5hash',
 ];
 
-export function handleStorageEvent(storageInstance, event) {
+export async function handleStorageEvent(storageInstance, event) {
   const { taskId, eventName } = event;
   const body = event.body || {};
 
   if (body.error) {
-    body.error = NativeFirebaseError.fromEvent(body.error, storageInstance._config.namespace);
+    body.error = await NativeFirebaseError.fromEvent(body.error, storageInstance._config.namespace);
   }
 
   storageInstance.emitter.emit(storageInstance.eventNameForApp(taskId, eventName), body);
@@ -40,7 +41,7 @@ export function handleStorageEvent(storageInstance, event) {
 
 export function getHttpUrlParts(url) {
   const decoded = decodeURIComponent(url);
-  const parts = decoded.match(/\/b\/(.*)\.appspot.com\/o\/([a-zA-Z0-9./\-_]+)(.*)/);
+  const parts = decoded.match(/\/b\/(.*)\/o\/([a-zA-Z0-9./\-_]+)(.*)/);
 
   if (!parts || parts.length < 3) {
     return null;
@@ -57,7 +58,7 @@ export function getGsUrlParts(url) {
   return { bucket, path };
 }
 
-export function validateMetadata(metadata) {
+export function validateMetadata(metadata, update = true) {
   if (!isObject(metadata)) {
     throw new Error('firebase.storage.SettableMetadata must be an object value if provided.');
   }
@@ -70,6 +71,13 @@ export function validateMetadata(metadata) {
     if (!SETTABLE_FIELDS.includes(key)) {
       throw new Error(
         `firebase.storage.SettableMetadata unknown property '${key}' provided for metadata.`,
+      );
+    }
+
+    // md5 is only allowed on put, not on update
+    if (key === 'md5hash' && update === true) {
+      throw new Error(
+        `firebase.storage.SettableMetadata md5hash may only be set on upload, not on updateMetadata`,
       );
     }
 

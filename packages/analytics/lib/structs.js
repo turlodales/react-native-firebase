@@ -28,6 +28,13 @@ const Item = struct({
   item_list_name: 'string?',
   item_location_id: 'string?',
   item_variant: 'string?',
+  quantity: 'number?',
+  price: 'number?',
+});
+
+export const ScreenView = struct.interface({
+  screen_class: 'string?',
+  screen_name: 'string?',
 });
 
 export const AddPaymentInfo = struct({

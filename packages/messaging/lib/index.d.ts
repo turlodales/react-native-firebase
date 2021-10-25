@@ -382,7 +382,6 @@ export namespace FirebaseMessagingTypes {
    * An interface representing all the available permissions that can be requested by your app via
    * the `requestPermission` API.
    */
-  // eslint-disable-next-line @typescript-eslint/interface-name-prefix
   export interface IOSPermissions {
     /**
      * Request permission to display alerts.
@@ -576,39 +575,24 @@ export namespace FirebaseMessagingTypes {
      * await firebase.messaging().registerDeviceForRemoteMessages();
      * const fcmToken = await firebase.messaging().getToken();
      *
-     * // Update backend (e.g. Firestore) with our scoped token for the user
+     * // Update backend (e.g. Firestore) with our token for the user
      * const uid = firebase.auth().currentUser.uid;
      * await firebase.firestore().doc(`users/${uid}`)
      *   .update({
      *     fcmTokens: firebase.firestore.FieldValues.arrayUnion(fcmToken),
      *   });
      * ```
-     *
-     * #### Example - Scoped Token
-     *
-     * The below example creates a new token for a specific notification scope (in this case, ALARM).
-     * Your server can specifically send messages to 'ALARM' tokens. By default, all notification scopes
-     * will be received.
-     *
-     * ```js
-     * // Get a token for 'ALARM' notifications
-     * const alarmFcmToken = await firebase.messaging().getToken(
-     *   firebase.app().options.messagingSenderId, // default to this app
-     *   'ALARM', // defaults to 'FCM'
-     * );
-     *
-     * // Update backend (e.g. Firestore) with our scoped token for the user
-     * const uid = firebase.auth().currentUser.uid;
-     * await firebase.firestore().doc(`users/${uid}`)
-     *   .update({
-     *     alarmFcmTokens: firebase.firestore.FieldValues.arrayUnion(alarmFcmToken),
-     *   });
-     * ```
-     *
-     * @param authorizedEntity The messaging sender ID. In most cases this will be the current default app.
-     * @param scope The scope to assign a token, which the sever can use to target messages at.
      */
-    getToken(authorizedEntity?: string, scope?: string = 'FCM'): Promise<string>;
+    getToken(): Promise<string>;
+
+    /**
+     * Returns wether the root view is headless or not
+     * i.e true if the app was launched in the background (for example, by data-only cloud message)
+     *
+     * More info: https://rnfirebase.io/messaging/usage#background-application-state
+     * @platform ios iOS
+     */
+    getIsHeadless(): Promise<boolean>;
 
     /**
      * Removes access to an FCM token previously authorized by it's scope. Messages sent by the server
@@ -619,11 +603,8 @@ export namespace FirebaseMessagingTypes {
      * ```js
      * await firebase.messaging().deleteToken();
      * ```
-     *
-     * @param authorizedEntity The messaging sender ID. In most cases this will be the current default app.
-     * @param scope The scope to assign when token will be deleted.
      */
-    deleteToken(authorizedEntity?: string, scope?: string = 'FCM'): Promise<void>;
+    deleteToken(): Promise<void>;
 
     /**
      * When any FCM payload is received, the listener callback is called with a `RemoteMessage`.
@@ -830,6 +811,8 @@ export namespace FirebaseMessagingTypes {
      * unsubscribe();
      * ```
      *
+     * NOTE: Android only
+     *
      * @param listener Called when the FCM deletes pending messages.
      */
     onDeletedMessages(listener: () => void): () => void;
@@ -849,6 +832,8 @@ export namespace FirebaseMessagingTypes {
      * // Unsubscribe from message sent events
      * unsubscribe();
      * ```
+     *
+     * NOTE: Android only
      *
      * @param listener Called when the FCM sends the remote message to FCM.
      */
@@ -870,6 +855,8 @@ export namespace FirebaseMessagingTypes {
      * // Unsubscribe from message sent error events
      * unsubscribe();
      * ```
+     *
+     * NOTE: Android only
      *
      * @param listener
      */
@@ -897,7 +884,7 @@ export namespace FirebaseMessagingTypes {
      * ```
      *
      */
-    setBackgroundMessageHandler(handler: (message: RemoteMessage) => Promise<any>);
+    setBackgroundMessageHandler(handler: (message: RemoteMessage) => Promise<any>): void;
 
     /**
      * Send a new `RemoteMessage` to the FCM server.
@@ -915,6 +902,8 @@ export namespace FirebaseMessagingTypes {
      *   }
      * });
      * ```
+     *
+     * NOTE: Android only
      *
      * @param message A `RemoteMessage` interface.
      */
@@ -949,26 +938,25 @@ export namespace FirebaseMessagingTypes {
   }
 }
 
-declare module '@react-native-firebase/messaging' {
-  // tslint:disable-next-line:no-duplicate-imports required otherwise doesn't work
-  import { ReactNativeFirebase } from '@react-native-firebase/app';
-  import ReactNativeFirebaseModule = ReactNativeFirebase.Module;
-  import FirebaseModuleWithStatics = ReactNativeFirebase.FirebaseModuleWithStatics;
+declare const defaultExport: ReactNativeFirebase.FirebaseModuleWithStatics<
+  FirebaseMessagingTypes.Module,
+  FirebaseMessagingTypes.Statics
+>;
 
-  const firebaseNamedExport: {} & ReactNativeFirebaseModule;
-  export const firebase = firebaseNamedExport;
+export const firebase: ReactNativeFirebase.Module & {
+  messaging: typeof defaultExport;
+  app(
+    name?: string,
+  ): ReactNativeFirebase.FirebaseApp & { messaging(): FirebaseMessagingTypes.Module };
+};
 
-  const defaultExport: FirebaseModuleWithStatics<
-    FirebaseMessagingTypes.Module,
-    FirebaseMessagingTypes.Statics
-  >;
-  export default defaultExport;
-}
+export default defaultExport;
 
 /**
  * Attach namespace to `firebase.` and `FirebaseApp.`.
  */
 declare module '@react-native-firebase/app' {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   namespace ReactNativeFirebase {
     import FirebaseModuleWithStatics = ReactNativeFirebase.FirebaseModuleWithStatics;
     interface Module {
@@ -981,23 +969,5 @@ declare module '@react-native-firebase/app' {
     interface FirebaseApp {
       messaging(): FirebaseMessagingTypes.Module;
     }
-  }
-}
-
-namespace ReactNativeFirebase {
-  interface FirebaseJsonConfig {
-    messaging_auto_init_enabled?: boolean;
-    messaging_android_headless_task_timeout?: number;
-    messaging_android_notification_channel_id?: string;
-    messaging_android_notification_color?: string;
-    /**
-     * Whether RNFirebase Messaging automatically calls `[[UIApplication sharedApplication] registerForRemoteNotifications];`
-     * automatically on app launch (recommended) - defaults to true.
-     *
-     * If set to false; make sure to call `firebase.messaging().registerDeviceForRemoteMessages()`
-     * early on in your app startup - otherwise you will NOT receive remote messages/notifications
-     * in your app.
-     */
-    messaging_ios_auto_register_for_remote_messages?: boolean;
   }
 }

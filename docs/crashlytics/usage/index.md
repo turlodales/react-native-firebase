@@ -26,8 +26,12 @@ Once installed, you must complete the following additional setup steps for Andro
 
 - [Android Additional Setup](/crashlytics/android-setup).
 
+> If you're using Expo, make sure to add the `@react-native-firebase/crashlytics` config plugin to your `app.json` or `app.config.js`. It handles the Android installation steps for you. For instructions on how to do that, view the [Expo](/#expo) installation section.
+
 If you're using an older version of React Native without autolinking support, or wish to integrate into an existing project,
 you can follow the manual installation steps for [iOS](/crashlytics/usage/installation/ios) and [Android](/crashlytics/usage/installation/android).
+
+> You may like reading a short article we wrote that explains how to configure and _most importantly_ verify your crashlytics installation so you are sure it is working. https://invertase.io/blog/react-native-firebase-crashlytics-configuration
 
 # What does it do
 
@@ -67,7 +71,7 @@ async function onSignIn(user) {
       role: 'admin',
       followers: '13',
       email: user.email,
-      username: user.username
+      username: user.username,
     }),
   ]);
 }
@@ -219,4 +223,70 @@ React Native. You can disable Crashlytics NDK in your `firebase.json` config.
     "crashlytics_ndk_enabled": false
   }
 }
+```
+
+## Crashlytics Javascript stacktrace issue generation
+
+React Native Crashlytics module by default installs a global javascript exception handler, and it records a crash with a javascript stack trace any time an unhandled javascript exception is thrown. Sometimes it is not desirable behavior since it might duplicate issues in combination with the default mode of javascript global exception handler chaining. We recommend leaving JS crashes enabled and turning off exception handler chaining. However, if you have special crash handling requirements, you may disable this behavior by setting the appropriate option to false:
+
+```json
+// <project-root>/firebase.json
+{
+  "react-native": {
+    "crashlytics_is_error_generation_on_js_crash_enabled": false
+  }
+}
+```
+
+## Crashlytics Javascript exception handler chaining
+
+React Native Crashlytics module's global javascript exception handler by default chains to any previously installed global javascript exception handler after logging the crash with the javascript stack trace. In default react-native setups, this means in development you will then see a "red box" and in release mode you will see a second native crash in the Crashlytics console with no javascript stack trace. These duplicate crash reports are probably not desirable, and the one from the chained handler will not have the javascript stack trace. We recommend disabling this once Crashlytics is integrated in testing. It is enabled by default for easier initial integration testing and to be sure introducing the option was not a breaking change. You may disable exception handler chaining by setting the appropriate option to false:
+
+```json
+// <project-root>/firebase.json
+{
+  "react-native": {
+    "crashlytics_javascript_exception_handler_chaining_enabled": false
+  }
+}
+```
+
+## Crashlytics non-fatal exceptions native handling
+
+In case you need to log non-fatal (handled) exceptions on the native side (e.g from `try catch` block), you may use the following static methods:
+
+### Android
+
+```java
+import io.invertase.firebase.crashlytics.ReactNativeFirebaseCrashlyticsNativeHelper;
+//...
+
+try {
+  //...
+} catch (Exception e) {
+  ReactNativeFirebaseCrashlyticsNativeHelper.recordNativeException(e);
+  return null;
+}
+```
+
+### iOS
+
+```objectivec
+#import <RNFBCrashlytics/RNFBCrashlyticsNativeHelper.h>
+//...
+
+@try {
+  //...
+} @catch (NSException *exception) {
+  NSMutableDictionary * info = [NSMutableDictionary dictionary];
+  [info setValue:exception.name forKey:@"ExceptionName"];
+  [info setValue:exception.reason forKey:@"ExceptionReason"];
+  [info setValue:exception.callStackReturnAddresses forKey:@"ExceptionCallStackReturnAddresses"];
+  [info setValue:exception.callStackSymbols forKey:@"ExceptionCallStackSymbols"];
+  [info setValue:exception.userInfo forKey:@"ExceptionUserInfo"];
+
+  NSError *error = [[NSError alloc] initWithDomain:yourdomain code:errorcode userInfo:info];
+  [RNFBCrashlyticsNativeHelper recordNativeError:error];
+}
+
 ```

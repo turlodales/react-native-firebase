@@ -27,10 +27,8 @@ import android.util.Log;
 import com.facebook.react.bridge.*;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
-
 import io.invertase.firebase.app.ReactNativeFirebaseApp;
 import io.invertase.firebase.common.ReactNativeFirebaseModule;
-
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -58,10 +56,9 @@ public class ReactNativeFirebaseUtilsModule extends ReactNativeFirebaseModule {
    * @return Boolean
    */
   private static Boolean isRunningInTestLab() {
-    String testLabSetting = Settings.System.getString(
-      ReactNativeFirebaseApp.getApplicationContext().getContentResolver(),
-      FIREBASE_TEST_LAB
-    );
+    String testLabSetting =
+        Settings.System.getString(
+            ReactNativeFirebaseApp.getApplicationContext().getContentResolver(), FIREBASE_TEST_LAB);
 
     return "true".equals(testLabSetting);
   }
@@ -71,9 +68,7 @@ public class ReactNativeFirebaseUtilsModule extends ReactNativeFirebaseModule {
     promise.resolve(getPlayServicesStatusMap());
   }
 
-  /**
-   * Prompt the device user to update play services
-   */
+  /** Prompt the device user to update play services */
   @ReactMethod
   public void androidPromptForPlayServices() {
     int status = isGooglePlayServicesAvailable();
@@ -87,9 +82,7 @@ public class ReactNativeFirebaseUtilsModule extends ReactNativeFirebaseModule {
     }
   }
 
-  /**
-   * Prompt the device user to update play services
-   */
+  /** Prompt the device user to update play services */
   @ReactMethod
   public void androidResolutionForPlayServices() {
     int status = isGooglePlayServicesAvailable();
@@ -107,9 +100,7 @@ public class ReactNativeFirebaseUtilsModule extends ReactNativeFirebaseModule {
     }
   }
 
-  /**
-   * Prompt the device user to update Play Services
-   */
+  /** Prompt the device user to update Play Services */
   @ReactMethod
   public void androidMakePlayServicesAvailable() {
     int status = isGooglePlayServicesAvailable();
@@ -159,28 +150,38 @@ public class ReactNativeFirebaseUtilsModule extends ReactNativeFirebaseModule {
     constants.put(KEY_TEMP_DIRECTORY, context.getCacheDir().getAbsolutePath());
     constants.put(KEY_CACHE_DIRECTORY, context.getCacheDir().getAbsolutePath());
 
-
+    File externalDirectory = context.getExternalFilesDir(null);
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-      File folder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-      constants.put(KEY_DOCUMENT_DIRECTORY, folder.getAbsolutePath());
-    } else {
+      if (externalDirectory != null) {
+        constants.put(KEY_DOCUMENT_DIRECTORY, externalDirectory.getAbsolutePath());
+      } else {
+        // The external directory may be null if it is truly external *and*
+        // the device's external storage environment changes. We will use the regular
+        // Files directory as a backup and note in the documentation that the directory may
+        // vary under rare conditions
+        constants.put(KEY_DOCUMENT_DIRECTORY, context.getFilesDir().getAbsolutePath());
+      }
+    }
+
+    if (!constants.containsKey(KEY_DOCUMENT_DIRECTORY)) {
       constants.put(KEY_DOCUMENT_DIRECTORY, context.getFilesDir().getAbsolutePath());
     }
 
-    constants.put(KEY_PICS_DIRECTORY, Environment
-      .getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-      .getAbsolutePath());
+    constants.put(
+        KEY_PICS_DIRECTORY,
+        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+            .getAbsolutePath());
 
-    constants.put(KEY_MOVIES_DIRECTORY, Environment
-      .getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES)
-      .getAbsolutePath());
+    constants.put(
+        KEY_MOVIES_DIRECTORY,
+        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES)
+            .getAbsolutePath());
 
     File externalStorageDirectory = Environment.getExternalStorageDirectory();
     if (externalStorageDirectory != null) {
       constants.put(KEY_EXT_STORAGE_DIRECTORY, externalStorageDirectory.getAbsolutePath());
     }
 
-    File externalDirectory = context.getExternalFilesDir(null);
     if (externalDirectory != null) {
       constants.put(KEY_EXTERNAL_DIRECTORY, externalDirectory.getAbsolutePath());
     }

@@ -2,7 +2,7 @@
 title: Screen Tracking
 description: Setup Firebase Analytics to track your in-app screen flow.
 previous: /analytics/usage
-next: /
+next: /app-check/usage
 ---
 
 Standard React Native applications run inside a single `Activity`/`ViewController`, meaning any screen changes won't be
@@ -12,23 +12,42 @@ therefore there is no "one fits all" solution to screen tracking.
 # React Navigation
 
 The [React Navigation](https://reactnavigation.org/) library allows for various navigation techniques such as
-Stack, Tab, Native or even custom navigation. The `NavigationController` component which the library exposes provides
-access to the current navigation state when a screen changes, allowing you to use the [`setCurrentScreen`](/reference/analytics#setCurrentScreen)
+Stack, Tab, Native or even custom navigation. The `NavigationContainer` component which the library exposes provides
+access to the current navigation state when a screen changes, allowing you to use the [`logScreenView`](/reference/analytics#logScreenView)
 method the Analytics library provides:
 
 ```jsx
 import analytics from '@react-native-firebase/analytics';
 import { NavigationContainer } from '@react-navigation/native';
 
-<NavigationContainer
-  ref={navigationRef}
-  onStateChange={state => {
-    const previousRouteName = routeNameRef.current;
-    const currentRouteName = getActiveRouteName(state);
+const App = () => {
+  const routeNameRef = React.useRef();
+  const navigationRef = React.useRef();
+  return (
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={() => {
+        routeNameRef.current = navigationRef.current.getCurrentRoute().name;
+      }}
+      onStateChange={async () => {
+        const previousRouteName = routeNameRef.current;
+        const currentRouteName = navigationRef.current.getCurrentRoute().name;
 
-    if (previousRouteName !== currentRouteName) {
-      analytics().setCurrentScreen(currentRouteName, currentRouteName);
-    }
+        if (previousRouteName !== currentRouteName) {
+          await analytics().logScreenView({
+            screen_name: currentRouteName,
+            screen_class: currentRouteName,
+          });
+        }
+        routeNameRef.current = currentRouteName;
+      }}
+    >
+      ...
+    </NavigationContainer>
+  );
+};
+
+export default App;
 ```
 
 For a full working example, view the [Screen tracking for analytics](https://reactnavigation.org/docs/screen-tracking/)
@@ -38,15 +57,18 @@ documentation on the React Navigation website.
 
 The [`wix/react-native-navigation`](https://github.com/wix/react-native-navigation) provides 100% native platform navigation
 for React Native apps. To manually track screens, you need to setup a `componentDidAppear` event listener and manually call the
-[`setCurrentScreen`](/reference/analytics#setCurrentScreen) method the Analytics library provides:
+[`logScreenView`](/reference/analytics#logScreenView) method the Analytics library provides:
 
 ```js
 import analytics from '@react-native-firebase/analytics';
 import { Navigation } from 'react-native-navigation';
 
-Navigation.events().registerComponentDidAppearListener(({ componentName, componentType }) => {
+Navigation.events().registerComponentDidAppearListener(async ({ componentName, componentType }) => {
   if (componentType === 'Component') {
-    analytics().setCurrentScreen(componentName, componentName);
+    await analytics().logScreenView({
+      screen_name: componentName,
+      screen_class: componentName,
+    });
   }
 });
 ```
